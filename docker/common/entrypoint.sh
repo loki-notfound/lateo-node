@@ -79,6 +79,6 @@ if [ -n "$user_args" ]; then
   IFS=$old_ifs
 fi
 
-if [ -n "${RPC_LOGIN:-}" ]; then login=set; else login=unset; fi
+if [ -n "${RPC_LOGIN:-}" ]; then login="set"; else login="unset"; fi
 echo "entrypoint: starting zephyrd (restricted RPC: ${RESTRICTED_RPC:-true}, RPC login: $login)" >&2
 exec /usr/local/bin/zephyrd "$@"
