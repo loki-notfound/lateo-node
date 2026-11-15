@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A highly available Zephyr node · node.lateo.dev</title>
+<meta name="description" content="Run a public Zephyr node on several hosts behind one hostname with Cloudflare Tunnel on the free plan.">
+<link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+<header class="site">
+  <div class="wrap">
+    <a class="name" href="/">node.lateo.dev</a>
+    <nav>
+      <a href="/">The node</a>
+      <a href="/own-node/">Run your own</a>
+      <a href="/ha-node/" aria-current="page">High availability</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <h1>A highly available public node</h1>
+  <p class="lead">This is how node.lateo.dev runs: one public hostname, several
+  hosts, Cloudflare's free plan. When a host goes down, the others keep serving,
+  and no host opens a port for RPC.</p>
+
+  <pre class="diagram"><code>wallet ── https ──▶ Cloudflare ─┬─ tunnel ──▶ cloudflared ─▶ zephyrd   host A
+                               ├─ tunnel ──▶ cloudflared ─▶ zephyrd   host B
+                               └─ tunnel ──▶ cloudflared ─▶ zephyrd   host C</code></pre>
+
+  <h2>What it needs</h2>
+  <ul>
+    <li>A domain on a Cloudflare account. The free plan is enough.</li>
+    <li>Two or more hosts, each meeting the
+    <a href="/own-node/">requirements of a single node</a>.</li>
+    <li>Docker with Compose on every host.</li>
+  </ul>
+
+  <h2>1. Create the tunnel</h2>
+  <p>In the Cloudflare dashboard, under Zero Trust, create a Cloudflare Tunnel of
+  the cloudflared type and copy the token from its install instructions.</p>
+  <div class="note">The token is a secret: anyone who holds it can attach a
+  connector to your hostname. Keep it out of repositories and screenshots.</div>
+
+  <h2>2. Route a hostname</h2>
+  <p>Add a public hostname to the tunnel, for example <code>node.example.com</code>,
+  with service type <strong>HTTP</strong> and URL <code>zephyrd:17767</code>. Every
+  host resolves that name to its own local daemon.</p>
+
+  <h2>3. Start each host</h2>
+  <p>On every host, from a copy of
+  <a href="https://github.com/loki-notfound/lateo-node/tree/main/deploy/ha">deploy/ha</a>:</p>
+  <pre><code>cp example.env .env           # put the token in TUNNEL_TOKEN
+docker compose up -d zephyrd</code></pre>
+  <p>Wait until the node is synchronized (hours on a fresh host):</p>
+  <pre><code>docker compose exec zephyrd healthcheck.sh &amp;&amp; echo synchronized</code></pre>
+  <p>Then start the connector:</p>
+  <pre><code>docker compose up -d</code></pre>
+  <p>The connector starts only after the daemon reports itself synchronized, so a
+  new host never serves an empty chain. Copying the data volume of a synchronized
+  host, with both daemons stopped, saves the first sync. Either image works; set
+  <code>ZEPHYR_IMAGE</code> in <code>.env</code> to choose, and use the same image
+  on every host.</p>
+
+  <h2>4. Check</h2>
+  <pre><code>curl -s https://node.example.com/get_info | grep -E '"(height|synchronized)"'</code></pre>
+  <p>The tunnel's page in the dashboard lists one connector per host.</p>
+
+  <h2>Good to know</h2>
+  <ul>
+    <li>Requests are spread over the hosts without stickiness, so two requests in a
+    row can reach daemons that differ by a block for a moment.</li>
+    <li>The wait for synchronization applies to <code>docker compose up</code>.
+    After a reboot both containers start at once; a host that is behind serves
+    until it catches up.</li>
+    <li>Every request reaches the daemon from the connector's address, so the
+    setup turns off the daemon's ban on RPC errors. Use Cloudflare's rate limiting
+    on the hostname instead.</li>
+    <li>The daemon matches RPC paths including the query string:
+    <code>/json_rpc?x=1</code> is a 404. Do not rewrite query strings in front of it.</li>
+    <li>A website on the same hostname, like this one, must claim exact paths only.
+    A catch-all route would swallow <code>/json_rpc</code> and break wallets.</li>
+  </ul>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <p>Source: <a href="https://github.com/loki-notfound/lateo-node">github.com/loki-notfound/lateo-node</a> (BSD-3-Clause).
+    Not affiliated with ZephyrProtocol.</p>
+  </div>
+</footer>
+</body>
+</html>

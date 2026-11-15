@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>node.lateo.dev · public Zephyr node</title>
+<meta name="description" content="A free, highly available public Zephyr node, and how to run one of your own.">
+<link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+<header class="site">
+  <div class="wrap">
+    <a class="name" href="/">node.lateo.dev</a>
+    <nav>
+      <a href="/" aria-current="page">The node</a>
+      <a href="/own-node/">Run your own</a>
+      <a href="/ha-node/">High availability</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <h1>A public Zephyr node</h1>
+  <p class="lead">node.lateo.dev is a free remote node for Zephyr wallets. Point
+  your wallet at it and it syncs without downloading the blockchain yourself.</p>
+
+  <h2>Use it</h2>
+  <p>In a wallet, set the daemon or remote node to:</p>
+  <pre><code>node.lateo.dev:443   (SSL)</code></pre>
+  <p>With the command-line wallet:</p>
+  <pre><code>zephyr-wallet-cli --daemon-address node.lateo.dev:443 --daemon-ssl enabled</code></pre>
+  <p>Or ask the node directly:</p>
+  <pre><code>curl https://node.lateo.dev/get_info</code></pre>
+
+  <h2>What it is</h2>
+  <ul>
+    <li><strong>Several machines, one address.</strong> The node runs on more than
+    one host in different places. Each host runs its own copy of the Zephyr
+    daemon next to a Cloudflare Tunnel connector; Cloudflare sends each request to
+    a host that is up. When one goes down, the others keep answering.</li>
+    <li><strong>Restricted RPC.</strong> Wallets can read the chain and submit
+    transactions. Mining, peer and administrative calls are switched off.</li>
+    <li><strong>No inbound ports.</strong> The hosts open nothing for RPC; all
+    traffic arrives through the tunnel.</li>
+    <li><strong>The daemon.</strong> Every host runs the most recent
+    <a href="https://github.com/loki-notfound/myzephyr/releases">myzephyr release</a>,
+    a build of Zephyr v2.3.0 with security fixes ported from Monero. It speaks the
+    same protocol as the official release.</li>
+  </ul>
+
+  <div class="note">
+    <strong>A remote node is a trust trade-off.</strong> It never sees your keys or
+    your balance, but whoever runs it can see your IP address and when your wallet
+    syncs or sends. For full privacy, run your own node.
+  </div>
+
+  <h2>Run your own</h2>
+  <div class="cards">
+    <div class="card">
+      <h3><a href="/own-node/">A single node</a></h3>
+      <p>One Docker container on one machine. No Cloudflare account, no domain.
+      Your wallet talks to your own node.</p>
+    </div>
+    <div class="card">
+      <h3><a href="/ha-node/">A highly available node</a></h3>
+      <p>The setup behind node.lateo.dev: several hosts under one hostname, on
+      Cloudflare's free plan.</p>
+    </div>
+  </div>
+
+  <h2>Support the node</h2>
+  <div class="donate">
+    <img src="/assets/donate-qr.svg" width="150" height="150" alt="QR code of the ZEPH donation address">
+    <div>
+      <p>The node is free to use. If it helps you, a donation in ZEPH covers part of
+      the hosts and is appreciated.</p>
+      <pre class="addr"><code>ZEPHsAvkaD73fP2NkBnpF24mZnma2xTuFM5RQPdVJWhkA8GCpvgCctQgY4mA99NQsXJWDXEBtXEoyZqTG7eDwpCqJsZkNXrAjsZ</code></pre>
+    </div>
+  </div>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <p>Source: <a href="https://github.com/loki-notfound/lateo-node">github.com/loki-notfound/lateo-node</a> (BSD-3-Clause).
+    Not affiliated with ZephyrProtocol.</p>
+  </div>
+</footer>
+</body>
+</html>

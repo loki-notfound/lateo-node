@@ -6,6 +6,7 @@ everything needed to run one of your own.
 - [`docker`](docker): two images of the Zephyr daemon, configured by environment
   variables: `myzephyr` (a signed personal build with security backports) and
   `zephyr` (the official release, unchanged). The README there compares them.
+- [`site`](site): the static site of node.lateo.dev.
 - [`deploy/standalone`](deploy/standalone): a single node with Docker Compose, no
   Cloudflare needed. Guide: [docs/standalone-node.md](docs/standalone-node.md).
 - [`deploy/ha`](deploy/ha): one replica of a highly available public node behind

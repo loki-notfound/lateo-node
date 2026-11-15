@@ -27,6 +27,8 @@ jobs:
           persist-credentials: false
       - name: Shell scripts
         run: shellcheck -s sh docker/common/*.sh tests/*.sh
+      - name: Site
+        run: node site/scripts/check.mjs
       - name: Compose files
         run: |
           set -eu

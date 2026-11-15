@@ -1,0 +1,24 @@
+{
+  // Static site of node.lateo.dev: assets only, no Worker code.
+  //
+  // Every route is exact or a narrow prefix. Never add node.lateo.dev/*: every
+  // path the site does not own must reach the tunnel and zephyrd, including
+  // /json_rpc and the other RPC paths.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "lateo-node-site",
+  "compatibility_date": "2026-11-01",
+  "workers_dev": false,
+  "preview_urls": false,
+  "assets": {
+    "directory": "./public",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "none"
+  },
+  "routes": [
+    { "pattern": "node.lateo.dev", "zone_name": "lateo.dev" },
+    { "pattern": "node.lateo.dev/own-node*", "zone_name": "lateo.dev" },
+    { "pattern": "node.lateo.dev/ha-node*", "zone_name": "lateo.dev" },
+    { "pattern": "node.lateo.dev/assets/*", "zone_name": "lateo.dev" },
+    { "pattern": "node.lateo.dev/robots.txt", "zone_name": "lateo.dev" }
+  ]
+}

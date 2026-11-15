@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /$
+Allow: /own-node/
+Allow: /ha-node/
+Allow: /assets/
+Disallow: /
