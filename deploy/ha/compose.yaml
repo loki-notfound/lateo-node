@@ -1,0 +1,41 @@
+# One replica of a highly available public Zephyr RPC node behind Cloudflare
+# Tunnel. Run the same file, with the same tunnel token, on every host that
+# should serve the hostname. docs/ha-node.md describes the Cloudflare side.
+#
+#   cp example.env .env        # then put the tunnel token in .env
+#   docker compose up -d zephyrd
+#   # wait until the node is synchronized (docs/ha-node.md), then:
+#   docker compose up -d
+#
+# The RPC port is not published on the host: the tunnel reaches zephyrd over
+# the Compose network as http://zephyrd:17767.
+name: zephyr-ha
+
+services:
+  zephyrd:
+    image: ghcr.io/loki-notfound/myzephyr:v2.3.0-sec.2-my.2
+    restart: unless-stopped
+    stop_grace_period: 5m
+    environment:
+      RESTRICTED_RPC: "true"
+      # Every RPC client arrives from the cloudflared container's address; a ban
+      # on RPC errors would lock out all of them at once.
+      DISABLE_RPC_BAN: "true"
+      HEALTH_REQUIRE_SYNC: "true"
+    ports:
+      - "17766:17766"
+    volumes:
+      - zephyrd-data:/data
+
+  cloudflared:
+    image: cloudflare/cloudflared:2026.10.7
+    restart: unless-stopped
+    command: ["tunnel", "--no-autoupdate", "run"]
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:?set TUNNEL_TOKEN in .env}
+    depends_on:
+      zephyrd:
+        condition: service_healthy
+
+volumes:
+  zephyrd-data:

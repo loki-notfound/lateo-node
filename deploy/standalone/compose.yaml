@@ -1,0 +1,28 @@
+# A standalone Zephyr node.
+#
+#   docker compose up -d
+#   docker compose logs -f zephyrd
+#
+# P2P (17766) is published so other nodes can connect in. RPC (17767) is
+# published on localhost only; see docs/standalone-node.md before opening it.
+name: zephyr-node
+
+services:
+  zephyrd:
+    image: ghcr.io/loki-notfound/myzephyr:v2.3.0-sec.2-my.2
+    restart: unless-stopped
+    stop_grace_period: 5m
+    environment:
+      RESTRICTED_RPC: "true"
+      # PRUNE: "true"          # keep about a third of the chain data
+      # OUT_PEERS: "16"
+      # IN_PEERS: "32"
+      # LOG_LEVEL: "0"
+    ports:
+      - "17766:17766"
+      - "127.0.0.1:17767:17767"
+    volumes:
+      - zephyrd-data:/data
+
+volumes:
+  zephyrd-data:
