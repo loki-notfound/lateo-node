@@ -1,4 +1,4 @@
-# A standalone Zephyr node.
+# A standalone Zephyr node, no Cloudflare involved.
 #
 #   docker compose up -d
 #   docker compose logs -f zephyrd
@@ -9,7 +9,9 @@ name: zephyr-node
 
 services:
   zephyrd:
-    image: ghcr.io/loki-notfound/myzephyr:v2.3.0-sec.2-my.2
+    # myzephyr (default) or the official release; docker/README.md compares them:
+    #   ZEPHYR_IMAGE=ghcr.io/loki-notfound/zephyr:v2.3.0
+    image: ${ZEPHYR_IMAGE:-ghcr.io/loki-notfound/myzephyr:v2.3.0-sec.2-my.2}
     restart: unless-stopped
     stop_grace_period: 5m
     environment:

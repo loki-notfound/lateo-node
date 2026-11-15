@@ -3,13 +3,13 @@
 Source of [node.lateo.dev](https://node.lateo.dev), a public Zephyr RPC node, and
 everything needed to run one of your own.
 
-- [`docker/myzephyr`](docker/myzephyr): the `myzephyr` image, zephyrd built from the signed
-  [myzephyr](https://github.com/loki-notfound/myzephyr) releases, configured by
-  environment variables.
-- [`deploy/standalone`](deploy/standalone): a single node with Docker Compose.
-  Guide: [docs/standalone-node.md](docs/standalone-node.md).
+- [`docker`](docker): two images of the Zephyr daemon, configured by environment
+  variables: `myzephyr` (a signed personal build with security backports) and
+  `zephyr` (the official release, unchanged). The README there compares them.
+- [`deploy/standalone`](deploy/standalone): a single node with Docker Compose, no
+  Cloudflare needed. Guide: [docs/standalone-node.md](docs/standalone-node.md).
 - [`deploy/ha`](deploy/ha): one replica of a highly available public node behind
-  Cloudflare Tunnel. Guide: [docs/ha-node.md](docs/ha-node.md).
+  a Cloudflare Tunnel on the free plan. Guide: [docs/ha-node.md](docs/ha-node.md).
 
 ## Using node.lateo.dev
 

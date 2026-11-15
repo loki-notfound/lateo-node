@@ -59,8 +59,8 @@ RUN apt-get update \
  && chown zephyr:zephyr /data
 COPY --from=fetch /out/bin/zephyrd /usr/local/bin/zephyrd
 COPY --from=fetch /out/doc/ /usr/share/doc/zephyrd/
-COPY docker/myzephyr/entrypoint.sh /usr/local/bin/entrypoint.sh
-COPY docker/myzephyr/healthcheck.sh /usr/local/bin/healthcheck.sh
+COPY docker/common/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY docker/common/healthcheck.sh /usr/local/bin/healthcheck.sh
 USER zephyr
 WORKDIR /data
 VOLUME /data

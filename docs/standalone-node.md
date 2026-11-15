@@ -1,7 +1,17 @@
 # Run a standalone Zephyr node
 
 A full node of your own: your wallet talks to it instead of to someone else's,
-and it adds a peer to the network.
+and it adds a peer to the network. One host, Docker, no Cloudflare account.
+
+## Choose an image
+- `ghcr.io/loki-notfound/myzephyr` (the default): a personal build with the
+  zephyr-backports security fixes and a signed release chain.
+- `ghcr.io/loki-notfound/zephyr`: the official ZephyrProtocol release, unchanged,
+  without upstream hashes or signatures.
+
+[docker/README.md](../docker/README.md) compares them. To use the official one:
+
+    ZEPHYR_IMAGE=ghcr.io/loki-notfound/zephyr:v2.3.0 docker compose up -d
 
 ## What it needs
 - Disk: the database was about 25 GiB in November 2026 and grows with the chain.
@@ -45,9 +55,10 @@ Pull the new image and recreate the container; the data volume stays:
 
 ## Other ways to run zephyrd
 - [myzephyr releases](https://github.com/loki-notfound/myzephyr/releases): the
-  binaries this image is built from, with signed `SHA256SUMS`.
+  binaries of the `myzephyr` image, with signed `SHA256SUMS`.
 - [ZephyrProtocol releases](https://github.com/ZephyrProtocol/zephyr/releases): the
-  official binaries, published without hashes or signatures. The seed nodes built
-  into v2.3.0 no longer answer; use `--add-peer` to find the network.
+  binaries of the `zephyr` image, published without hashes or signatures. The seed
+  nodes built into v2.3.0 no longer answer; start it with `--seed-node` addresses
+  (the `zephyr` image sets them).
 - [`jnitecki/zephyr`](https://hub.docker.com/r/jnitecki/zephyr): a third-party image of
   v2.3.0 for amd64 and arm64. Its source and binary origin are not published.

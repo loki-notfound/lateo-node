@@ -25,7 +25,9 @@ type HTTP and URL `zephyrd:17767`. That is the Compose service name; every
 replica resolves it to its own local daemon.
 
 ## 3. Start each replica
-On every host:
+Either image works; `ZEPHYR_IMAGE` in `.env` selects the official release instead
+of myzephyr ([docker/README.md](../docker/README.md) compares them). Use the same
+image on every replica. On every host:
 
     cd deploy/ha
     cp example.env .env          # put the token in TUNNEL_TOKEN
