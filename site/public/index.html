@@ -27,8 +27,16 @@
   <h2>Use it</h2>
   <p>In a wallet, set the daemon or remote node to:</p>
   <pre><code>node.lateo.dev:443   (SSL)</code></pre>
-  <p>With the command-line wallet:</p>
-  <pre><code>zephyr-wallet-cli --daemon-address node.lateo.dev:443 --daemon-ssl enabled</code></pre>
+  <p>With the command-line wallet, which detects SSL by itself:</p>
+  <pre><code>zephyr-wallet-cli --daemon-address node.lateo.dev:443</code></pre>
+  <p>The official Linux wallet of v2.3.0 does not find the system's certificate
+  authorities on its own: it connects encrypted, but warns that it has not
+  verified the node's certificate. Point it at the system's list to have the
+  certificate checked, for example on Debian and Ubuntu:</p>
+  <pre><code>SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
+  zephyr-wallet-cli --daemon-address node.lateo.dev:443</code></pre>
+  <p>Leave out <code>--daemon-ssl enabled</code>: with it, this wallet asks for a
+  pinned certificate and does not start.</p>
   <p>Or ask the node directly:</p>
   <pre><code>curl https://node.lateo.dev/get_info</code></pre>
 

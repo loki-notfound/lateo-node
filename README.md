@@ -14,8 +14,12 @@ everything needed to run one of your own.
 
 ## Using node.lateo.dev
 
-Point a Zephyr wallet at `node.lateo.dev:443` with SSL, or use
-`https://node.lateo.dev` as the daemon address. The RPC is restricted: view-only
+Point a Zephyr wallet at `node.lateo.dev:443`; it detects SSL by itself. Where a
+full address is asked for, use `https://node.lateo.dev:443`, with the port.
+With the command-line wallet, leave out `--daemon-ssl enabled` (it then asks for
+a pinned certificate) and set `SSL_CERT_FILE` to the system's certificate list
+to have the node's certificate checked, for example
+`SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt zephyr-wallet-cli --daemon-address node.lateo.dev:443`. The RPC is restricted: view-only
 methods and transaction submission.
 
 ## Contributing
