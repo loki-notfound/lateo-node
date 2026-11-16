@@ -23,7 +23,7 @@
   <h1>A highly available public node</h1>
   <p class="lead">This is how node.lateo.dev runs: one public hostname, several
   hosts, Cloudflare's free plan. When a host goes down, the others keep serving,
-  and no host opens a port for RPC.</p>
+  and the tunnel needs no open port on any host.</p>
 
   <pre class="diagram"><code>wallet ── https ──▶ Cloudflare ─┬─ tunnel ──▶ cloudflared ─▶ zephyrd   host A
                                ├─ tunnel ──▶ cloudflared ─▶ zephyrd   host B
@@ -52,16 +52,37 @@
   <p>On every host, from a copy of
   <a href="https://github.com/loki-notfound/lateo-node/tree/main/deploy/ha">deploy/ha</a>:</p>
   <pre><code>cp example.env .env           # put the token in TUNNEL_TOKEN
-docker compose up -d zephyrd</code></pre>
-  <p>Wait until the node is synchronized (hours on a fresh host):</p>
-  <pre><code>docker compose exec zephyrd healthcheck.sh &amp;&amp; echo synchronized</code></pre>
-  <p>Then start the connector:</p>
-  <pre><code>docker compose up -d</code></pre>
-  <p>The connector starts only after the daemon reports itself synchronized, so a
-  new host never serves an empty chain. Copying the data volume of a synchronized
-  host, with both daemons stopped, saves the first sync. Either image works; set
-  <code>ZEPHYR_IMAGE</code> in <code>.env</code> to choose, and use the same image
-  on every host.</p>
+docker compose up -d --build</code></pre>
+  <p>The connector attaches to the tunnel only while its daemon is healthy: the
+  RPC answers, the node is synchronized and it is not behind its peers. A new
+  host takes no requests during its first sync (hours), and a host whose daemon
+  stops, restarts or falls behind drops out until it has recovered. Follow it
+  with:</p>
+  <pre><code>docker compose logs -f cloudflared</code></pre>
+  <p>Copying the data volume of a synchronized host, with both daemons stopped,
+  saves the first sync. Either image works; set <code>ZEPHYR_IMAGE</code> in
+  <code>.env</code> to choose, and use the same image on every host. The
+  connector is Cloudflare's own <code>cloudflared</code>, wrapped in a small
+  script that Compose builds into an image on the host.</p>
+
+  <h2>RPC on the host itself</h2>
+  <p>The tunnel needs no published port. Beside it, the setup publishes the
+  restricted RPC on port 17767 of every address of the host, so the node is also
+  usable directly. Choose per host:</p>
+  <div class="table-scroll">
+  <table>
+    <tbody>
+      <tr><th>default</th><td>every address of the host; reachable directly, without Cloudflare in front</td></tr>
+      <tr><th><code>RPC_BIND=127.0.0.1</code> in <code>.env</code></th><td>the host itself only</td></tr>
+      <tr><th>delete the <code>17767</code> line under <code>ports</code> in <code>compose.yaml</code></th><td>no RPC on the host; the tunnel is the only way in</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="note">With the default, a host with a public address answers anyone
+  on port 17767. Those requests pass around Cloudflare and its rate limiting and
+  show where the host is, and Docker publishes ports past <code>ufw</code>. For a
+  public node whose hosts should stay unknown, delete the line. node.lateo.dev
+  itself runs that way.</div>
 
   <h2>4. Check</h2>
   <pre><code>curl -s https://node.example.com/get_info | grep -E '"(height|synchronized)"'</code></pre>
@@ -71,9 +92,11 @@ docker compose up -d zephyrd</code></pre>
   <ul>
     <li>Requests are spread over the hosts without stickiness, so two requests in a
     row can reach daemons that differ by a block for a moment.</li>
-    <li>The wait for synchronization applies to <code>docker compose up</code>.
-    After a reboot both containers start at once; a host that is behind serves
-    until it catches up.</li>
+    <li>The health check runs every 10 seconds and takes three failures to stop
+    the connector, so a daemon that goes down can still receive requests for up
+    to a minute.</li>
+    <li>Update one host at a time; its connector leaves the tunnel while the
+    daemon restarts and returns by itself.</li>
     <li>Every request reaches the daemon from the connector's address, so the
     setup turns off the daemon's ban on RPC errors. Use Cloudflare's rate limiting
     on the hostname instead.</li>

@@ -28,10 +28,13 @@ for (const file of walk(root).filter((f) => f.endsWith(".html"))) {
   if (!/<title>[^<]+<\/title>/.test(html)) failures.push(`${name}: no title`);
   if (!/<meta name="description" content="[^"]+">/.test(html)) failures.push(`${name}: no description`);
   if (/<script\b/i.test(html)) failures.push(`${name}: contains a script`);
+  for (const [tag] of html.matchAll(/<link\b[^>]*>/gi)) {
+    if (/\bhref="(?!\/)/.test(tag)) failures.push(`${name}: external link element ${tag}`);
+  }
   for (const [, attr, value] of html.matchAll(/\b(src|href)="([^"]*)"/g)) {
     if (value.startsWith("/")) {
       if (!resolveLocal(value)) failures.push(`${name}: broken link ${value}`);
-    } else if (attr === "src" || /rel="stylesheet"[^>]*href="http/.test(html)) {
+    } else if (attr === "src") {
       failures.push(`${name}: external resource ${value}`);
     } else if (!value.startsWith("https://")) {
       failures.push(`${name}: link is neither local nor https: ${value}`);

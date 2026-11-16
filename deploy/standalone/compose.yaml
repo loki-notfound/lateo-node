@@ -4,7 +4,10 @@
 #   docker compose logs -f zephyrd
 #
 # P2P (17766) is published so other nodes can connect in. RPC (17767) is
-# published on localhost only; see docs/standalone-node.md before opening it.
+# published on every address of the host, restricted to view-only methods and
+# transaction submission, so wallets on your network can use the node. On a
+# host with a public address that makes it a public node; RPC_BIND=127.0.0.1
+# keeps RPC to the host itself. Docker publishes ports past ufw and firewalld.
 name: zephyr-node
 
 services:
@@ -22,7 +25,7 @@ services:
       # LOG_LEVEL: "0"
     ports:
       - "17766:17766"
-      - "127.0.0.1:17767:17767"
+      - "${RPC_BIND:-0.0.0.0}:17767:17767"
     volumes:
       - zephyrd-data:/data
 

@@ -55,7 +55,7 @@
   <h2>Start it</h2>
   <p>With <code>docker run</code>:</p>
   <pre><code>docker run -d --name zephyrd --restart unless-stopped \
-  -p 17766:17766 -p 127.0.0.1:17767:17767 \
+  -p 17766:17766 -p 17767:17767 \
   -v zephyrd-data:/data \
   ghcr.io/loki-notfound/myzephyr:latest</code></pre>
   <p>For the official release, use <code>ghcr.io/loki-notfound/zephyr:latest</code>
@@ -84,9 +84,13 @@ docker compose logs -f zephyrd</code></pre>
   <p>The <a href="https://github.com/loki-notfound/lateo-node/tree/main/docker">full list</a> is in the repository.</p>
 
   <div class="note">
-    RPC is published on <code>127.0.0.1</code> only. To offer it to others, keep
-    <code>RESTRICTED_RPC=true</code> before you publish port 17767, or put the node
-    behind a Cloudflare Tunnel as described under
+    RPC (port 17767) is published on every address of the machine, restricted to
+    view-only calls and sending transactions. On a machine with a public address
+    that makes it a public node, and Docker publishes ports past <code>ufw</code>.
+    To keep RPC to the machine itself, publish <code>127.0.0.1:17767:17767</code>
+    (<code>RPC_BIND=127.0.0.1</code> with Compose). Never publish it with
+    <code>RESTRICTED_RPC=false</code>. To serve others without an open port, put
+    the node behind a Cloudflare Tunnel as described under
     <a href="/ha-node/">high availability</a>.
   </div>
 

@@ -1,19 +1,24 @@
 name: images
 
-# Branch pushes and pull requests: check, build and test both images on both
-# platforms; nothing is published.
+# Pull requests, pushes to main and a weekly run: check, build and test both
+# images on both platforms; nothing is published. The weekly run also reports
+# pins that have fallen behind their upstream (tests/check-pins.sh).
 # A tag publishes one image to GHCR after the same build and test:
 #   myzephyr-<version>  ->  ghcr.io/<owner>/myzephyr:<version>
 #   zephyr-<version>    ->  ghcr.io/<owner>/zephyr:<version>
 # <version> is the release tag the Dockerfile builds (for example
 # v2.3.0-sec.2-my.2), optionally followed by -r<N> for an image-only revision.
 # Every publish also moves that image's `latest` tag to the published version.
+# A tag publishes only if its commit is on main.
 
 on:
   pull_request:
   push:
-    branches: ['**']
+    branches: [main]
     tags: ['myzephyr-v*', 'zephyr-v*']
+  schedule:
+    - cron: '17 5 * * 1'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -26,9 +31,17 @@ jobs:
         with:
           persist-credentials: false
       - name: Shell scripts
-        run: shellcheck -s sh docker/common/*.sh tests/*.sh
+        run: shellcheck -s sh docker/common/*.sh deploy/ha/gate/*.sh tests/*.sh
+      - name: Versions agree
+        run: tests/check-versions.sh
       - name: Site
         run: node site/scripts/check.mjs
+      - name: Tunnel gate
+        run: |
+          set -eu
+          tests/gate-test.sh
+          docker build -q -t ci/gate:test deploy/ha/gate
+          docker run --rm --network none --entrypoint cloudflared ci/gate:test --version
       - name: Compose files
         run: |
           set -eu
@@ -48,10 +61,6 @@ jobs:
         image: [myzephyr, zephyr]
         arch: [amd64, arm64]
         include:
-          - image: myzephyr
-            version: v2.3.0-3adbb517a
-          - image: zephyr
-            version: v2.3.0-67c5f53b8
           - arch: amd64
             runner: ubuntu-24.04
           - arch: arm64
@@ -72,7 +81,23 @@ jobs:
           provenance: false
           tags: ci/${{ matrix.image }}:test
       - name: Test
-        run: tests/image-test.sh ci/${{ matrix.image }}:test ${{ matrix.version }}
+        env:
+          IMAGE: ${{ matrix.image }}
+        run: tests/image-test.sh "ci/$IMAGE:test" "$(cat "docker/$IMAGE/zephyrd-version")"
+
+  # Weekly only: fails when a pinned release, base image or cloudflared version
+  # has a successor, which notifies the maintainer.
+  pins:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Pins
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: tests/check-pins.sh
 
   publish:
     if: startsWith(github.ref, 'refs/tags/')
@@ -93,16 +118,20 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 0
+      - name: The tagged commit is on main
+        run: git merge-base --is-ancestor HEAD origin/main
       - name: Image and version from the tag
         id: tag
         run: |
           set -eu
           ref=$GITHUB_REF_NAME
           case "$ref" in
-            myzephyr-v*) image=myzephyr; arg=MYZEPHYR_TAG; expect=v2.3.0-3adbb517a ;;
-            zephyr-v*)   image=zephyr;   arg=ZEPHYR_TAG;   expect=v2.3.0-67c5f53b8 ;;
+            myzephyr-v*) image=myzephyr; arg=MYZEPHYR_TAG ;;
+            zephyr-v*)   image=zephyr;   arg=ZEPHYR_TAG ;;
             *) echo "unexpected tag $ref" >&2; exit 1 ;;
           esac
+          expect=$(cat "docker/$image/zephyrd-version")
           version=${ref#"$image"-}
           built=$(grep -m1 "^ARG $arg=" "docker/$image/Dockerfile" | cut -d= -f2)
           case "$version" in

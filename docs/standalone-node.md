@@ -32,7 +32,7 @@ Progress shows in the log as `Synced <height>/<target>`. Ask the node itself:
 
     curl -s http://127.0.0.1:17767/get_info | grep -E '"(height|target_height|synchronized)"'
 
-Point a wallet at `127.0.0.1:17767` (or the host's address on your network).
+Point a wallet at `127.0.0.1:17767`, or at the host's address on your network.
 
 ## Finding peers
 The node finds peers on its own, which can take a few minutes. To speed it up,
@@ -41,12 +41,18 @@ name known nodes:
     environment:
       ADD_PEERS: "node-a.example:17766,node-b.example:17766"
 
-## Opening RPC to others
-The Compose file publishes RPC on localhost only. To run a public remote node,
-keep `RESTRICTED_RPC: "true"`, publish `17767:17767` and consider
-`PUBLIC_NODE: "true"` so wallets can find it. Never publish RPC with
-`RESTRICTED_RPC: "false"`. To put the node behind Cloudflare instead of opening
-a port, see [ha-node.md](ha-node.md).
+## Who can reach RPC
+The Compose file publishes RPC (17767) on every address of the host, restricted
+to view-only methods and transaction submission. Wallets on your network can use
+the node; on a host with a public address, so can anyone, which makes it a public
+remote node. Docker publishes ports past `ufw` and `firewalld`, so a host
+firewall does not close it.
+
+- Only this host: `RPC_BIND=127.0.0.1 docker compose up -d` (or `RPC_BIND` in a
+  `.env` file next to `compose.yaml`).
+- A public node on purpose: consider `PUBLIC_NODE: "true"` so wallets can find it.
+- Never publish RPC with `RESTRICTED_RPC: "false"`.
+- Behind Cloudflare instead of an open port: [ha-node.md](ha-node.md).
 
 ## Update
 Pull the new image and recreate the container; the data volume stays:

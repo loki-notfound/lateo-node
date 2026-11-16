@@ -18,6 +18,14 @@ Point a Zephyr wallet at `node.lateo.dev:443` with SSL, or use
 `https://node.lateo.dev` as the daemon address. The RPC is restricted: view-only
 methods and transaction submission.
 
+## Contributing
+
+Issues and pull requests are welcome. Every commit on `main` is signed by the
+maintainer, so an accepted pull request is not merged with GitHub's button: the
+maintainer applies the change as a signed commit that credits you, and closes
+the pull request with a reference to it. Contributions are accepted under the
+repository's licence. For security problems, see [SECURITY.md](SECURITY.md).
+
 ## Not affiliated
 
 This project is not part of ZephyrProtocol or zephyr-backports. The daemon in the

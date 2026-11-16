@@ -29,8 +29,12 @@ From the repository root:
 ## Run
 
     docker run -d --name zephyrd --restart unless-stopped \
-      -p 17766:17766 -p 127.0.0.1:17767:17767 \
+      -p 17766:17766 -p 17767:17767 \
       -v zephyrd-data:/data ghcr.io/loki-notfound/myzephyr:v2.3.0-sec.2-my.2
+
+RPC is restricted by default, so publishing 17767 offers view-only methods and
+transaction submission to whoever can reach the host; `-p 127.0.0.1:17767:17767`
+keeps it to the host itself.
 
 The daemon runs as uid 10001 with its data, including `zephyrd.log`, in `/data`.
 A bind mount must be writable by that uid.

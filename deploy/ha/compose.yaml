@@ -3,12 +3,12 @@
 # should serve the hostname. docs/ha-node.md describes the Cloudflare side.
 #
 #   cp example.env .env        # then put the tunnel token in .env
-#   docker compose up -d zephyrd
-#   # wait until the node is synchronized (docs/ha-node.md), then:
-#   docker compose up -d
+#   docker compose up -d --build
 #
-# The RPC port is not published on the host: the tunnel reaches zephyrd over
-# the Compose network as http://zephyrd:17767.
+# The connector runs only while zephyrd is healthy and synchronized (gate/):
+# a fresh, restarting or lagging replica takes no requests. The tunnel reaches
+# zephyrd over the Compose network as http://zephyrd:17767 and needs no
+# published port. RPC is also published on the host; see the ports below.
 name: zephyr-ha
 
 services:
@@ -26,18 +26,28 @@ services:
       HEALTH_REQUIRE_SYNC: "true"
     ports:
       - "17766:17766"
+      # RPC on the host, beside the tunnel. Three choices (docs/ha-node.md):
+      #   default              every address of the host; reachable directly,
+      #                        without Cloudflare in front
+      #   RPC_BIND=127.0.0.1   the host itself only (set it in .env)
+      #   delete this line     no RPC on the host at all; the tunnel is the only way in
+      - "${RPC_BIND:-0.0.0.0}:17767:17767"
     volumes:
       - zephyrd-data:/data
 
+  # Cloudflare's cloudflared binary, taken unchanged from its official image and
+  # run by gate/gate.sh, which stops it while zephyrd is unhealthy or behind.
   cloudflared:
-    image: cloudflare/cloudflared:2026.10.7
+    build:
+      context: ./gate
+      args:
+        CLOUDFLARED_IMAGE: cloudflare/cloudflared:2026.10.7
     restart: unless-stopped
-    command: ["tunnel", "--no-autoupdate", "run"]
+    stop_grace_period: 1m
     environment:
       TUNNEL_TOKEN: ${TUNNEL_TOKEN:?set TUNNEL_TOKEN in .env}
     depends_on:
-      zephyrd:
-        condition: service_healthy
+      - zephyrd
 
 volumes:
   zephyrd-data:
