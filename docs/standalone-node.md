@@ -66,5 +66,3 @@ Pull the new image and recreate the container; the data volume stays:
   binaries of the `zephyr` image, published without hashes or signatures. The seed
   nodes built into v2.3.0 no longer answer; start it with `--seed-node` addresses
   (the `zephyr` image sets them).
-- [`jnitecki/zephyr`](https://hub.docker.com/r/jnitecki/zephyr): a third-party image of
-  v2.3.0 for amd64 and arm64. Its source and binary origin are not published.
