@@ -18,7 +18,9 @@ RUN apt-get update \
  && groupadd --gid 10002 tunnel \
  && useradd --uid 10002 --gid tunnel --home-dir /nonexistent --no-create-home --shell /usr/sbin/nologin tunnel
 COPY --from=cloudflared /usr/local/bin/cloudflared /usr/local/bin/cloudflared
-COPY --chmod=0755 gate.sh /usr/local/bin/gate.sh
+# A separate chmod instead of COPY --chmod, which only BuildKit knows.
+COPY gate.sh /usr/local/bin/gate.sh
+RUN chmod 0755 /usr/local/bin/gate.sh
 USER tunnel
 # tini is PID 1 so that stop signals reach gate.sh, which stops the connector.
 ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/gate.sh"]
