@@ -37,4 +37,6 @@ image is a personal build; its release notes say what it changes.
 
 ## License
 
-BSD-3-Clause, see [LICENSE](LICENSE).
+BSD-3-Clause, see [LICENSE](LICENSE). The lateo name and the mark files of the
+site (its favicons and logo) are not covered by that licence; see
+[TRADEMARKS.md](TRADEMARKS.md).

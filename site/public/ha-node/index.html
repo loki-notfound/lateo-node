@@ -6,11 +6,18 @@
 <title>A highly available Zephyr node · node.lateo.dev</title>
 <meta name="description" content="Run a public Zephyr node on several hosts behind one hostname with Cloudflare Tunnel on the free plan.">
 <link rel="stylesheet" href="/assets/site.css">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon-180.png">
 </head>
 <body>
+<a class="lt-skip-link" href="#main">Skip to main content</a>
 <header class="site">
   <div class="wrap">
-    <a class="name" href="/">node.lateo.dev</a>
+    <a class="name" href="/"><picture>
+      <source srcset="/assets/lockup-host-node-reversed.svg" media="(prefers-color-scheme: dark)">
+      <img src="/assets/lockup-host-node.svg" width="176" height="28" alt="node.lateo.dev">
+    </picture></a>
     <nav>
       <a href="/">The node</a>
       <a href="/own-node/">Run your own</a>
@@ -19,7 +26,7 @@
   </div>
 </header>
 
-<main class="wrap">
+<main id="main" class="wrap" tabindex="-1">
   <h1>A highly available public node</h1>
   <p class="lead">This is how node.lateo.dev runs: one public hostname, several
   hosts, Cloudflare's free plan. When a host goes down, the others keep serving,

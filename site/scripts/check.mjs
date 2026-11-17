@@ -1,5 +1,6 @@
 // Static checks of the site: every page has a title and a description, loads
-// nothing from another origin, and links only to pages and assets that exist.
+// nothing from another origin, and links only to pages, assets and in-page ids
+// that exist.
 // Run: npm run check (from site/).
 import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { join, relative } from "node:path";
@@ -31,10 +32,13 @@ for (const file of walk(root).filter((f) => f.endsWith(".html"))) {
   for (const [tag] of html.matchAll(/<link\b[^>]*>/gi)) {
     if (/\bhref="(?!\/)/.test(tag)) failures.push(`${name}: external link element ${tag}`);
   }
-  for (const [, attr, value] of html.matchAll(/\b(src|href)="([^"]*)"/g)) {
-    if (value.startsWith("/")) {
+  const ids = new Set([...html.matchAll(/\bid="([^"]+)"/g)].map((m) => m[1]));
+  for (const [, attr, value] of html.matchAll(/\b(src|href|srcset)="([^"]*)"/g)) {
+    if (value.startsWith("#")) {
+      if (!ids.has(value.slice(1))) failures.push(`${name}: in-page link to a missing id ${value}`);
+    } else if (value.startsWith("/")) {
       if (!resolveLocal(value)) failures.push(`${name}: broken link ${value}`);
-    } else if (attr === "src") {
+    } else if (attr === "src" || attr === "srcset") {
       failures.push(`${name}: external resource ${value}`);
     } else if (!value.startsWith("https://")) {
       failures.push(`${name}: link is neither local nor https: ${value}`);
