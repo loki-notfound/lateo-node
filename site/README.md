@@ -10,8 +10,10 @@ The pages use the lateo house style, version 0.1.0 of 2026-11-17:
 `public/assets/site.css` is its stylesheet for static content sites, copied
 unchanged, and the favicons and the `node.lateo.dev` lockups come from it. The
 mark files fall outside the repository's licence ([TRADEMARKS.md](../TRADEMARKS.md)).
-To change the look, change the house style and copy the new version in; edit
-`site.css` here only together with the house style.
+`public/assets/node.css` holds the few additions of this site (code in tables
+kept whole, the navigation on one line on narrow screens). To change the look,
+change the house style and copy the new version in; edit `site.css` here only
+together with the house style.
 
 ## Routes
 The Worker shares its hostname with the node's RPC, so it claims only what it

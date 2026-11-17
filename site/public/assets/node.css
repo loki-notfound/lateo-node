@@ -1,0 +1,26 @@
+/* Additions of node.lateo.dev to the lateo house style in site.css, which stays
+   an unchanged copy. Keep this file small and carry lasting fixes back into the
+   house style. */
+
+/* Code in a table cell stays whole; a wide table scrolls inside its own box. */
+th code,
+td code {
+  overflow-wrap: normal;
+  white-space: nowrap;
+}
+
+/* Narrow screens: the three navigation links fit on one line under the name. */
+@media (max-width: 30rem) {
+  header.site nav {
+    gap: .25rem .75rem;
+    font-size: .9375rem;
+  }
+  header.site nav a {
+    padding-inline: 0;
+  }
+}
+@media (max-width: 22.5rem) {
+  header.site nav {
+    font-size: .875rem;
+  }
+}
