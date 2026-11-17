@@ -34,19 +34,17 @@
 
   <h2>What it needs</h2>
   <ul>
+    <li><strong>Docker</strong> on <code>linux/amd64</code> or <code>linux/arm64</code>;
+    see <a href="https://docs.docker.com/engine/install/">Docker's install guide</a>.</li>
     <li><strong>Disk:</strong> the database was about 25 GiB in November 2026 and
     grows with the chain. An SSD makes the first sync much faster.</li>
     <li><strong>Time:</strong> a sync from scratch took about 11.5 hours on one
     test machine in November 2026; expect anything from hours to days.</li>
-    <li><strong>Network:</strong> outbound connections to other nodes (port 17766)
-    and to the Zephyr price oracles (HTTPS). Opening 17766 inbound is optional and
-    helps the network.</li>
-    <li><strong>Docker</strong> on <code>linux/amd64</code> or <code>linux/arm64</code>.</li>
+    <li><strong>Network:</strong> an ordinary internet connection. Forwarding port
+    17766 to the machine is optional and helps the network.</li>
   </ul>
 
-  <h2>Choose an image</h2>
-  <p>Both images run the Zephyr daemon the same way and are configured the same
-  way. They differ in which binary they carry.</p>
+  <h2>1. Choose an image</h2>
   <div class="table-scroll">
   <table>
     <thead><tr><th></th><th><code>myzephyr</code></th><th><code>zephyr</code></th></tr></thead>
@@ -58,58 +56,70 @@
     </tbody>
   </table>
   </div>
-  <p>A data directory works with either image; you can switch later.</p>
+  <p>Take <code>zephyr</code> to run exactly what ZephyrProtocol shipped, and
+  <code>myzephyr</code> for the security fixes, from a single maintainer. The data
+  works with either image, so you can switch later. The commands below use
+  <code>myzephyr</code>; for the other, write
+  <code>ghcr.io/loki-notfound/zephyr:latest</code>.</p>
 
-  <h2>Start it</h2>
-  <p>With <code>docker run</code>:</p>
+  <h2>2. Start it</h2>
   <pre><code>docker run -d --name zephyrd --restart unless-stopped \
+  --stop-timeout 300 \
   -p 17766:17766 -p 17767:17767 \
   -v zephyrd-data:/data \
   ghcr.io/loki-notfound/myzephyr:latest</code></pre>
-  <p>For the official release, use <code>ghcr.io/loki-notfound/zephyr:latest</code>
-  instead. Or with Docker Compose, from a copy of
-  <a href="https://github.com/loki-notfound/lateo-node/tree/main/deploy/standalone">deploy/standalone</a>:</p>
-  <pre><code>docker compose up -d
-docker compose logs -f zephyrd</code></pre>
+  <div class="note">
+    <code>-p 17767:17767</code> offers the node's RPC, restricted to reading the
+    chain and sending transactions, on every address of the machine, so wallets
+    on your network can use it. On a machine with a public address, such as a
+    rented server, that is anyone, and a firewall like <code>ufw</code> does not
+    stop it: Docker publishes ports past it. For this machine only, write
+    <code>-p 127.0.0.1:17767:17767</code> instead.
+  </div>
 
-  <h2>Watch it sync</h2>
+  <h2>3. Watch it sync</h2>
+  <pre><code>docker logs -f --tail 20 zephyrd</code></pre>
+  <p>The log counts up as <code>Synced &lt;height&gt;/&lt;target&gt;</code>; leave
+  it with Ctrl-C, the node keeps running. Or ask the node:</p>
   <pre><code>curl -s http://127.0.0.1:17767/get_info | grep -E '"(height|target_height|synchronized)"'</code></pre>
-  <p>When <code>synchronized</code> is <code>true</code>, point your wallet at
-  <code>127.0.0.1:17767</code>, or at the machine's address on your network.</p>
+  <p>It is ready when <code>synchronized</code> is <code>true</code>.</p>
+
+  <h2>4. Connect your wallet</h2>
+  <pre><code>zephyr-wallet-cli --daemon-address 127.0.0.1:17767</code></pre>
+  <p>In the desktop wallet, under Nodes in the settings, select
+  <strong>Custom Node</strong> with address <code>127.0.0.1</code> and port
+  <code>17767</code>. From another computer on your network, use the address of
+  the node's machine instead of <code>127.0.0.1</code>.</p>
+
+  <h2>5. Keep it up to date</h2>
+  <pre><code>docker pull ghcr.io/loki-notfound/myzephyr:latest
+docker stop zephyrd
+docker rm zephyrd</code></pre>
+  <p>Then repeat the command of step 2. The chain data stays in the volume
+  <code>zephyrd-data</code>, so the node continues where it stopped.</p>
 
   <h2>Settings</h2>
-  <p>The images take environment variables, for example:</p>
-  <div class="table-scroll">
-  <table>
-    <tbody>
-      <tr><th><code>PRUNE=true</code></th><td>keep roughly a third of the chain data</td></tr>
-      <tr><th><code>OUT_PEERS</code>, <code>IN_PEERS</code></th><td>limit the number of peer connections</td></tr>
-      <tr><th><code>ADD_PEERS</code></th><td>comma-separated <code>host:port</code> list of nodes to connect to</td></tr>
-      <tr><th><code>RESTRICTED_RPC</code></th><td><code>true</code> by default: view-only RPC</td></tr>
-    </tbody>
-  </table>
-  </div>
-  <p>The <a href="https://github.com/loki-notfound/lateo-node/tree/main/docker">full list</a> is in the repository.</p>
+  <p>Settings are environment variables: add <code>-e NAME=value</code> to the
+  command of step 2, before the image name. For example, <code>-e PRUNE=true</code>
+  keeps roughly a third of the chain data. The
+  <a href="https://github.com/loki-notfound/lateo-node/tree/main/docker">full list</a>
+  is in the repository. Never set <code>RESTRICTED_RPC=false</code> on a node
+  whose port 17767 others can reach.</p>
 
-  <div class="note">
-    RPC (port 17767) is published on every address of the machine, restricted to
-    view-only calls and sending transactions. On a machine with a public address
-    that makes it a public node, and Docker publishes ports past <code>ufw</code>.
-    To keep RPC to the machine itself, publish <code>127.0.0.1:17767:17767</code>
-    (<code>RPC_BIND=127.0.0.1</code> with Compose). Never publish it with
-    <code>RESTRICTED_RPC=false</code>. To serve others without an open port, put
-    the node behind a Cloudflare Tunnel as described under
-    <a href="/ha-node/">high availability</a>.
-  </div>
-
-  <h2>Other ways</h2>
+  <h2>More</h2>
   <ul>
-    <li><a href="https://github.com/loki-notfound/myzephyr/releases">myzephyr releases</a>:
-    the binaries of the <code>myzephyr</code> image, with a signed hash list.</li>
-    <li><a href="https://github.com/ZephyrProtocol/zephyr/releases">ZephyrProtocol releases</a>:
-    the official binaries.</li>
-    <li><a href="https://hub.docker.com/r/jnitecki/zephyr"><code>jnitecki/zephyr</code></a>:
-    a third-party image of v2.3.0; its source and binary origin are not published.</li>
+    <li>With Docker Compose instead of <code>docker run</code>, and more on peers
+    and updates: the
+    <a href="https://github.com/loki-notfound/lateo-node/blob/main/docs/standalone-node.md">standalone guide</a>.</li>
+    <li>To serve others without an open port: a Cloudflare Tunnel, as described
+    under <a href="/ha-node/">high availability</a>; one host is enough for that.</li>
+    <li>Without these images:
+    <a href="https://github.com/loki-notfound/myzephyr/releases">myzephyr releases</a>
+    (the binaries of the <code>myzephyr</code> image, with a signed hash list),
+    <a href="https://github.com/ZephyrProtocol/zephyr/releases">ZephyrProtocol releases</a>
+    (the official binaries), or
+    <a href="https://hub.docker.com/r/jnitecki/zephyr"><code>jnitecki/zephyr</code></a>,
+    a third-party image of v2.3.0 whose source and binary origin are not published.</li>
   </ul>
 </main>
 

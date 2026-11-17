@@ -33,31 +33,37 @@
   your wallet at it and it syncs without downloading the blockchain yourself.</p>
 
   <h2>Use it</h2>
-  <p>In a wallet, set the daemon or remote node to:</p>
-  <pre><code>node.lateo.dev:443   (SSL)</code></pre>
-  <p>With the command-line wallet, which detects SSL by itself:</p>
+  <h3>Desktop wallet</h3>
+  <p>In the wallet's settings, under Nodes: click Disconnect, select
+  <strong>Custom Node</strong>, fill in the two fields and click Connect.</p>
+  <div class="table-scroll">
+  <table>
+    <tbody>
+      <tr><th>Node Address</th><td><code>https://node.lateo.dev</code></td></tr>
+      <tr><th>Node Port</th><td><code>443</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>Type the <code>https://</code>; without it the wallet does not connect.</p>
+
+  <h3>Command-line wallet</h3>
   <pre><code>zephyr-wallet-cli --daemon-address node.lateo.dev:443</code></pre>
-  <p>The official Linux wallet of v2.3.0 does not find the system's certificate
-  authorities on its own: it connects encrypted, but warns that it has not
-  verified the node's certificate. Point it at the system's list to have the
-  certificate checked, for example on Debian and Ubuntu:</p>
+  <p>If the wallet warns that it has not verified the node's certificate, give it
+  the system's certificate list. On Debian and Ubuntu:</p>
   <pre><code>SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
   zephyr-wallet-cli --daemon-address node.lateo.dev:443</code></pre>
-  <p>Leave out <code>--daemon-ssl enabled</code>: with it, this wallet asks for a
-  pinned certificate and does not start.</p>
-  <p>Or ask the node directly:</p>
+  <p>Do not add <code>--daemon-ssl enabled</code>; the wallet does not start with it.</p>
+
+  <h3>Check that it answers</h3>
   <pre><code>curl https://node.lateo.dev/get_info</code></pre>
 
   <h2>What it is</h2>
   <ul>
     <li><strong>Several machines, one address.</strong> The node runs on more than
-    one host in different places. Each host runs its own copy of the Zephyr
-    daemon next to a Cloudflare Tunnel connector; Cloudflare sends each request to
-    a host that is up. When one goes down, the others keep answering.</li>
+    one host in different places. Cloudflare sends each request to a host that is
+    up; when one goes down, the others keep answering.</li>
     <li><strong>Restricted RPC.</strong> Wallets can read the chain and submit
     transactions. Mining, peer and administrative calls are switched off.</li>
-    <li><strong>No inbound ports.</strong> The hosts open nothing for RPC; all
-    traffic arrives through the tunnel.</li>
     <li><strong>The daemon.</strong> Every host runs a
     <a href="https://github.com/loki-notfound/myzephyr/releases">myzephyr release</a>,
     a build of Zephyr v2.3.0 with security fixes ported from Monero. It speaks the
@@ -66,8 +72,9 @@
 
   <div class="note">
     <strong>A remote node is a trust trade-off.</strong> It never sees your keys or
-    your balance, but whoever runs it can see your IP address and when your wallet
-    syncs or sends. For full privacy, run your own node.
+    your balance, but its operator and Cloudflare, which carries the traffic, can
+    see your IP address and when your wallet syncs or sends. For full privacy, run
+    your own node.
   </div>
 
   <h2>Run your own</h2>

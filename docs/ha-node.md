@@ -43,7 +43,9 @@ out of the tunnel until it has recovered. Follow it with:
     docker compose exec zephyrd healthcheck.sh && echo synchronized
 
 Copying a synchronized data volume from another replica (with both daemons
-stopped) saves the initial sync.
+stopped) saves the initial sync. The daemon runs as uid and gid 10001; if you
+copy the files by hand or mount a directory instead of the volume, make them
+its own: `chown -R 10001:10001 <directory>`.
 
 The connector is Cloudflare's own `cloudflared` binary, copied unchanged from the
 official `cloudflare/cloudflared` image into a small image that Compose builds on
@@ -71,6 +73,10 @@ Cloudflare, so its rate limiting and its hiding of the host's address do not
 apply to them, and the daemon's own RPC ban is off in this setup. Docker
 publishes ports past `ufw` and `firewalld`; a host firewall rule does not close
 it. For a public node whose hosts should stay unknown, delete the line.
+
+The Compose file also publishes the P2P port 17766, so other Zephyr nodes can
+connect in. That is optional: delete its line under `ports` for a host with no
+open port at all; the node then makes outgoing connections only.
 
 Without a published port, check a replica from inside its container:
 
