@@ -9,6 +9,12 @@ td code {
   white-space: nowrap;
 }
 
+/* The lockup is an inline image by default and then sits on the text baseline,
+   above the middle of the header row; as a block it centres with the links. */
+header.site .name img {
+  display: block;
+}
+
 /* Narrow screens: the three navigation links fit on one line under the name. */
 @media (max-width: 30rem) {
   header.site nav {
