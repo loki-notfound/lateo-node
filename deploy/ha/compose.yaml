@@ -24,13 +24,15 @@ services:
       # on RPC errors would lock out all of them at once.
       DISABLE_RPC_BAN: "true"
       HEALTH_REQUIRE_SYNC: "true"
+    # Both ports are set in .env, so this file stays as it came and a later
+    # "git pull" brings updates without a conflict (docs/ha-node.md).
     ports:
-      - "17766:17766"
-      # RPC on the host, beside the tunnel. Three choices (docs/ha-node.md):
-      #   default              every address of the host; reachable directly,
-      #                        without Cloudflare in front
-      #   RPC_BIND=127.0.0.1   the host itself only (set it in .env)
-      #   delete this line     no RPC on the host at all; the tunnel is the only way in
+      # P2P, for other Zephyr nodes to connect in. Default: every address of the
+      # host. P2P_BIND=127.0.0.1 closes it; the node then connects out only.
+      - "${P2P_BIND:-0.0.0.0}:17766:17766"
+      # RPC on the host, beside the tunnel. Default: every address of the host,
+      # reachable directly, without Cloudflare in front. RPC_BIND=127.0.0.1
+      # keeps it to the host itself; the tunnel is then the only way in.
       - "${RPC_BIND:-0.0.0.0}:17767:17767"
     volumes:
       - zephyrd-data:/data

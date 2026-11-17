@@ -56,40 +56,37 @@ the host ([deploy/ha/gate](../deploy/ha/gate)); `gate.sh` there starts and stops
 
 The tunnel's page in the dashboard lists one connector per replica.
 
-## Who can reach RPC on the host
+## Which ports the host opens
 The tunnel reaches zephyrd over the Compose network and needs no published port.
-Beside it, the Compose file publishes the restricted RPC on the host, so the node
-is also usable directly. Choose per host:
+Beside it, the Compose file publishes two ports on the host. Both are set in
+`.env`, so `compose.yaml` stays as it came and a later `git pull` does not
+conflict. Choose per host:
 
-| Setting | RPC on the host | Use it when |
+| Port | Unset | To close it |
 |---|---|---|
-| default (`RPC_BIND` unset) | every address of the host, port 17767 | wallets or tools on the host's network should reach this replica directly |
-| `RPC_BIND=127.0.0.1` in `.env` | the host itself only | you want local checks (`curl http://127.0.0.1:17767/get_info`) and nothing else |
-| delete the `17767` line under `ports` in `compose.yaml` | none | the tunnel must be the only way in |
+| 17767, the restricted RPC | every address of the host: wallets and tools can reach this replica directly | `RPC_BIND=127.0.0.1`: the host itself only; the tunnel is the only way in |
+| 17766, P2P | every address of the host: other Zephyr nodes can connect in | `P2P_BIND=127.0.0.1`: the node makes outgoing connections only |
 
-Apply a change with `docker compose up -d`. With the default, on a host with a
-public address anyone can reach port 17767: those requests pass around
+Apply a change with `docker compose up -d`. With `RPC_BIND` unset, on a host
+with a public address anyone can reach port 17767: those requests pass around
 Cloudflare, so its rate limiting and its hiding of the host's address do not
 apply to them, and the daemon's own RPC ban is off in this setup. Docker
 publishes ports past `ufw` and `firewalld`; a host firewall rule does not close
-it. For a public node whose hosts should stay unknown, delete the line.
+it. For a public node whose hosts should stay unknown, set
+`RPC_BIND=127.0.0.1`. A local check keeps working with it:
 
-The Compose file also publishes the P2P port 17766, so other Zephyr nodes can
-connect in. That is optional: delete its line under `ports` for a host with no
-open port at all; the node then makes outgoing connections only.
-
-Without a published port, check a replica from inside its container:
-
-    docker compose exec zephyrd curl -s http://127.0.0.1:17767/get_info
+    curl -s http://127.0.0.1:17767/get_info
 
 ## Update
-One replica at a time, so the others keep serving.
+One replica at a time, so the others keep serving:
 
-- zephyrd: change `ZEPHYR_IMAGE` in `.env` (or pull the new default), then
-  `docker compose pull zephyrd && docker compose up -d zephyrd`. The connector
-  leaves the tunnel while the daemon restarts and returns by itself.
-- cloudflared: change `CLOUDFLARED_IMAGE` in `compose.yaml`, then
-  `docker compose up -d --build cloudflared`.
+    git pull
+    docker compose pull
+    docker compose up -d --build
+
+That brings the new default daemon image, the gate and its pinned cloudflared.
+The connector leaves the tunnel while the daemon restarts and returns by
+itself. If `.env` sets `ZEPHYR_IMAGE`, put the new image tag there first.
 
 ## Notes
 - Requests are spread over the replicas without session affinity, so two

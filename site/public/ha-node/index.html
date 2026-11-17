@@ -68,27 +68,24 @@ cp example.env .env</code></pre>
   <code>zephyr</code> image instead of <code>myzephyr</code>
   (<code>ZEPHYR_IMAGE</code>); use the same image on every host.</p>
 
-  <h2>4. Choose who reaches the RPC on the host</h2>
-  <p>The tunnel needs no open port. Beside it, the setup offers the restricted
-  RPC on port 17767 of the host, so the node is also usable directly. Decide
-  before you start:</p>
+  <h2>4. Choose which ports the host opens</h2>
+  <p>The tunnel needs no open port. Beside it, the setup opens two ports on
+  every address of the host: 17767, the restricted RPC, so the node is also
+  usable directly, and 17766, on which other Zephyr nodes connect in. To close
+  one, add a line to <code>.env</code> before you start:</p>
   <div class="table-scroll">
   <table>
     <tbody>
-      <tr><th>change nothing</th><td>every address of the host; reachable directly, without Cloudflare in front</td></tr>
-      <tr><th><code>RPC_BIND=127.0.0.1</code> in <code>.env</code></th><td>the host itself only</td></tr>
-      <tr><th>delete the <code>17767</code> line under <code>ports</code> in <code>compose.yaml</code></th><td>no RPC on the host; the tunnel is the only way in</td></tr>
+      <tr><th><code>RPC_BIND=127.0.0.1</code></th><td>closes 17767 to the outside; the tunnel is the only way in</td></tr>
+      <tr><th><code>P2P_BIND=127.0.0.1</code></th><td>closes 17766; the node only connects out</td></tr>
     </tbody>
   </table>
   </div>
-  <div class="note">With nothing changed, a host with a public address answers
-  anyone on port 17767. Those requests pass around Cloudflare and its rate
-  limiting and show where the host is, and a firewall like <code>ufw</code> does
-  not stop them: Docker publishes ports past it. For a public node whose hosts
-  should stay unknown, delete the line. node.lateo.dev itself runs that way.</div>
-  <p>Port 17766 is published as well: other Zephyr nodes connect to it, not
-  wallets. It is optional; delete its line too for a host with no open port at
-  all.</p>
+  <div class="note">Unchanged, a host with a public address answers anyone on
+  port 17767. Those requests pass around Cloudflare and its rate limiting and
+  show where the host is, and a firewall like <code>ufw</code> does not stop
+  them: Docker publishes ports past it. For a public node whose hosts should
+  stay unknown, set <code>RPC_BIND=127.0.0.1</code>.</div>
 
   <h2>5. Start</h2>
   <pre><code>docker compose up -d --build
@@ -106,11 +103,13 @@ docker compose logs -f cloudflared</code></pre>
   back.</p>
 
   <h2>7. Keep it up to date</h2>
-  <p>One host at a time, so the others keep serving. Set <code>ZEPHYR_IMAGE</code>
-  in <code>.env</code> to the new image tag, then:</p>
-  <pre><code>docker compose pull zephyrd
-docker compose up -d zephyrd</code></pre>
-  <p>The host leaves the tunnel while its daemon restarts and returns by itself.</p>
+  <p>One host at a time, so the others keep serving:</p>
+  <pre><code>git pull
+docker compose pull
+docker compose up -d --build</code></pre>
+  <p>The host leaves the tunnel while its daemon restarts and returns by itself.
+  If you set <code>ZEPHYR_IMAGE</code> in <code>.env</code>, put the new image
+  tag there first.</p>
 
   <h2>Good to know</h2>
   <ul>
